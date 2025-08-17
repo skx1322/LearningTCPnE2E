@@ -6,6 +6,7 @@ const currentPort = <number><unknown>process.env.CUSTOM_PORT || 3000;
 
 const app = new Elysia()
     .get("/", () => "Hello Elysia")
+    .get("/ping", () => "pinging it")
     .onStart(async ({ server }) => {
         console.log(`Elysia server starting on port ${server?.port}`);
         try {
@@ -17,3 +18,36 @@ const app = new Elysia()
     })
     .listen(currentPort);
 app.use(router);
+
+const tcpServer = Bun.listen({
+    hostname: "0.0.0.0",
+    port: 8081,
+    socket: {
+        open(socket) {
+            console.log(`TCP Client Connected from ${socket.remoteAddress}`);
+            socket.write("Welcome to the Bun TCP server!\n");
+        },
+
+        data(socket, data) {
+            const message = data.toString().trim();
+            console.log(`[TCP] Received from ${socket.remoteAddress}: ${message}`);
+            if (message.toLowerCase() === 'quit') {
+                socket.write("Goodbye!\n");
+                socket.end();
+                return;
+            }
+
+            socket.write(`Server echoes: ${message}\n`);
+        },
+
+        close(socket) {
+            console.log(`[TCP] Client disconnected from ${socket.remoteAddress}`);
+        },
+
+        error(socket, error) {
+            console.error(`[TCP] An error occurred with ${socket.remoteAddress}:`, error);
+        },
+    }
+});
+
+console.log(`TCP server is running on http://${tcpServer.hostname}:${tcpServer.port}`);
