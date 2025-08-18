@@ -1,21 +1,23 @@
 import { Elysia } from "elysia";
 import { router } from "./router/router";
 import { DB } from "./db/connect";
+import { client } from "./service/keyEnc";
+import { clientPassword } from "./service/passEnc";
 
 const currentPort = <number><unknown>process.env.CUSTOM_PORT || 3000;
 
 const app = new Elysia()
     .get("/", () => "Hello Elysia")
     .get("/ping", () => "pinging it")
-    .onStart(async ({ server }) => {
-        console.log(`Elysia server starting on port ${server?.port}`);
-        try {
-            await DB`SELECT 1`;
-            console.log('Database connection verified on startup.');
-        } catch (error) {
-            console.error('Failed to verify database connection:', error);
-        }
-    })
+    // .onStart(async ({ server }) => {
+    //     console.log(`Elysia server starting on port ${server?.port}`);
+    //     try {
+    //         await DB`SELECT 1`;
+    //         console.log('Database connection verified on startup.');
+    //     } catch (error) {
+    //         console.error('Failed to verify database connection:', error);
+    //     }
+    // })
     .listen(currentPort);
 app.use(router);
 
@@ -28,16 +30,21 @@ const tcpServer = Bun.listen({
             socket.write("Welcome to the Bun TCP server!\n");
         },
 
-        data(socket, data) {
+        async data(socket, data) {
             const message = data.toString().trim();
-            console.log(`[TCP] Received from ${socket.remoteAddress}: ${message}`);
+            const session = new clientPassword(<string>Bun.env.PASSWORD_KEY);
+
+            const newMessage = await session.lockMessage(message);
+
+            console.log(`[TCP] Received from ${socket.remoteAddress}: ${newMessage.data.encryptedContent}`);
             if (message.toLowerCase() === 'quit') {
                 socket.write("Goodbye!\n");
                 socket.end();
                 return;
             }
 
-            socket.write(`Server echoes: ${message}\n`);
+            const decrypted = await session.unlockMessage(newMessage);
+            socket.write(`Server echoes: ${decrypted}\n`);
         },
 
         close(socket) {
@@ -47,6 +54,8 @@ const tcpServer = Bun.listen({
         error(socket, error) {
             console.error(`[TCP] An error occurred with ${socket.remoteAddress}:`, error);
         },
+
+        
     }
 });
 

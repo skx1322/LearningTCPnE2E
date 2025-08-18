@@ -5,6 +5,11 @@ export class clientPassword {
     private salt = randomBytes(16);
     private iterations = 100000;
 
+    private password: string;
+    constructor(password: string){
+        this.password = password;
+    }
+
     private deriveKey(password: string, salt: Buffer, iterations: number): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             pbkdf2(
@@ -23,8 +28,8 @@ export class clientPassword {
         });
     }
 
-    async lockMessage(content: string, password: string): Promise<EncryptedChatPassword<"RECEIVE_MESSAGE">> {
-        const sharedSecretKey = await this.deriveKey(password, this.salt, this.iterations);
+    async lockMessage(content: string): Promise<EncryptedChatPassword<"RECEIVE_MESSAGE">> {
+        const sharedSecretKey = await this.deriveKey(this.password, this.salt, this.iterations);
 
         const nonce = randomBytes(12);
         const cipher = createCipheriv('aes-256-gcm', sharedSecretKey, nonce);
@@ -46,14 +51,14 @@ export class clientPassword {
         return encryptedContent;
     };
 
-    async unlockMessage(message: EncryptedChatPassword<"RECEIVE_MESSAGE">, password: string): Promise<string | null> {
+    async unlockMessage(message: EncryptedChatPassword<"RECEIVE_MESSAGE">): Promise<string | null> {
         const encrypted = Buffer.from(message.data.encryptedContent, "base64");
         const nonce = Buffer.from(message.data.nonce, "base64");
         const authTag = Buffer.from(message.data.authTag, "base64");
         const salt = Buffer.from(message.data.salt, "base64");
         const iterations = message.data.iteration;
 
-        const derivedKey = await this.deriveKey(password, salt, iterations);
+        const derivedKey = await this.deriveKey(this.password, salt, iterations);
 
         const decipher = createDecipheriv('aes-256-gcm', derivedKey, nonce);
         decipher.setAuthTag(authTag);
