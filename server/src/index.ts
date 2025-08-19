@@ -1,24 +1,15 @@
 import { Elysia } from "elysia";
 import { router } from "./router/router";
-import { DB } from "./db/connect";
-import { client } from "./service/keyEnc";
 import { clientPassword } from "./service/passEnc";
 
-const currentPort = <number><unknown>process.env.CUSTOM_PORT || 3000;
+const currentPort = <string>process.env.CUSTOM_PORT ?? 3000;
 
 const app = new Elysia()
     .get("/", () => "Hello Elysia")
     .get("/ping", () => "pinging it")
-    // .onStart(async ({ server }) => {
-    //     console.log(`Elysia server starting on port ${server?.port}`);
-    //     try {
-    //         await DB`SELECT 1`;
-    //         console.log('Database connection verified on startup.');
-    //     } catch (error) {
-    //         console.error('Failed to verify database connection:', error);
-    //     }
-    // })
-    .listen(currentPort);
+    .listen(currentPort, () => {
+        console.log(`Elysia server is operating by port ${currentPort}`)
+    });
 app.use(router);
 
 const tcpServer = Bun.listen({
@@ -54,8 +45,6 @@ const tcpServer = Bun.listen({
         error(socket, error) {
             console.error(`[TCP] An error occurred with ${socket.remoteAddress}:`, error);
         },
-
-        
     }
 });
 
