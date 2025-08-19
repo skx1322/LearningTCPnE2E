@@ -1,69 +1,43 @@
-# React + TypeScript + Vite
+# Introduction 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Localhost
+## ONLY FOR DEVELOPER WITH REACTJS / VITE EXPERIENCE 
+1. If you want to host this code locally, you may choose this method if you want to modify the code. First, you need either NodeJS or Bun install and the latest version is always the safest choice here.
 
-Currently, two official plugins are available:
+### NodeJS
+https://nodejs.org/en
+(Make sure to select the right OS)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### BunSH
+https://bun.com/
+(Make sure to select the right OS)
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Once NodeJS or BunSH is installed, you may try to git clone the repository to your local machine by doing
+```
+git clone https://github.com/skx1322/HealthX_LandingPage.git
+git branch localhost_test
+git checkout localhost_test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. Once cloned, you can start running the codebase after your directory is inside of the folder. 
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+First, open terminal of the code.
+![alt text](image-2.png)
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+(Make sure you're really in the right directory, you'll see these if you type `ls` in terminal)
+![alt text](image-3.png)
+
+Once you're sure, you may start install the libraries, if you're using NodeJS, do this:
 ```
+npm install
+npm run dev
+```
+
+However you're using Bun, do this instead:
+```
+bun install
+bun run dev
+```
+
+The install step will tried to install all the neccesaries libraries and once done, you can start running the app by doing running dev. When you run dev locally, it'll show that your device hosted the website on localhost:5173 which you can access by going to the url of it. http://localhost:5173/
+
