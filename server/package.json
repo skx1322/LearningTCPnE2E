@@ -6,6 +6,7 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
+    "@elysiajs/websocket": "^0.2.8",
     "@neondatabase/serverless": "^1.0.1",
     "@types/bun": "^1.2.20",
     "elysia": "latest",

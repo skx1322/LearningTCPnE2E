@@ -39,10 +39,10 @@ export class clientPassword {
         const encryptedContent: EncryptedChatPassword<"RECEIVE_MESSAGE"> = {
             command: "RECEIVE_MESSAGE",
             data: {
-                chatID: `FOV_6`,
-                encryptedContent: encrypted.toString("base64"),
+                chat_id: `FOV_6`,
+                encrypted_content: encrypted.toString("base64"),
                 nonce: nonce.toString("base64"),
-                authTag: authTag.toString("base64"),
+                auth_tag: authTag.toString("base64"),
                 salt: this.salt.toString("base64"),
                 iteration: this.iterations
             }
@@ -52,9 +52,9 @@ export class clientPassword {
     };
 
     async unlockMessage(message: EncryptedChatPassword<"RECEIVE_MESSAGE">): Promise<string | null> {
-        const encrypted = Buffer.from(message.data.encryptedContent, "base64");
+        const encrypted = Buffer.from(message.data.encrypted_content, "base64");
         const nonce = Buffer.from(message.data.nonce, "base64");
-        const authTag = Buffer.from(message.data.authTag, "base64");
+        const authTag = Buffer.from(message.data.auth_tag, "base64");
         const salt = Buffer.from(message.data.salt, "base64");
         const iterations = message.data.iteration;
 

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router"
-import Footer from "./footer"
+// import Footer from "./footer"
 // import Header from "./header"
 
 const Main = () => {
@@ -7,7 +7,7 @@ const Main = () => {
     <div>
         {/* <Header></Header> */}
         <Outlet></Outlet>
-        <Footer></Footer>
+        {/* <Footer></Footer> */}
     </div>
   )
 }

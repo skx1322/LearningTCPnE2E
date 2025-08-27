@@ -15,10 +15,10 @@ export class client {
         const encryptedContent: EncryptedChatMessage<"RECEIVE_MESSAGE"> = {
             command: "RECEIVE_MESSAGE",
             data: {
-                chatID: `FOV_6`,
-                encryptedContent: encrypted.toString("base64"),
+                chat_id: `FOV_6`,
+                encrypted_content: encrypted.toString("base64"),
                 nonce: nonce.toString("base64"),
-                authTag: authTag.toString("base64")
+                auth_tag: authTag.toString("base64")
             }
         };
 
@@ -26,10 +26,10 @@ export class client {
     };
 
     async decryptMessage(message: EncryptedChatMessage<"RECEIVE_MESSAGE">) {
-        const encrypted = Buffer.from(message.data.encryptedContent, "base64");
+        const encrypted = Buffer.from(message.data.encrypted_content, "base64");
         const nonce = Buffer.from(message.data.nonce, "base64");
 
-        const authTag = Buffer.from(message.data.authTag, "base64");
+        const authTag = Buffer.from(message.data.auth_tag, "base64");
 
         const decipher = createDecipheriv('aes-256-gcm', this.sharedSecretKey, nonce);
         decipher.setAuthTag(authTag);
