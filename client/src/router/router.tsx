@@ -4,6 +4,7 @@ import Home from "../pages/home";
 import Register from "../pages/register";
 import About from "../pages/about";
 import Chat from "../pages/chat";
+import Video from "../pages/video";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: "/chat",
         element: <Chat />
+      },
+            {
+        path: "/video",
+        element: <Video />
       },
     ],
   },

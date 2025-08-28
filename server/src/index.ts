@@ -9,23 +9,23 @@ const currentPort = <string>process.env.CUSTOM_PORT ?? 3000;
 const app = new Elysia()
     // .use(websocket())
     .get("/", () => "Hello Elysia")
-    .ws('/ws', {
-        open(ws) {
-            console.log(`[WS] Client connected with ID: ${ws.data.server}`);
-            ws.send({ command: "INFO", message: "Welcome to the Elysia WebSocket server!" });
-        },
-        message(ws, message) {
-            console.log(`[WS] Received from ${ws.data.server}:`, message);
-            ws.send({ command: "ECHO", data: message });
-        },
-        close(ws) {
-            console.log(`[WS] Client disconnected: ${ws.data.server}`);
-        },
-    })
+    .use(router)
+    // .ws('/ws', {
+    //     open(ws) {
+    //         console.log(`[WS] Client connected with ID: ${ws.data.server}`);
+    //         ws.send({ command: "INFO", message: "Welcome to the Elysia WebSocket server!" });
+    //     },
+    //     message(ws, message) {
+    //         console.log(`[WS] Received from ${ws.data.server}:`, message);
+    //         ws.send({ command: "ECHO", data: message });
+    //     },
+    //     close(ws) {
+    //         console.log(`[WS] Client disconnected: ${ws.data.server}`);
+    //     },
+    // })
     .listen(currentPort, () => {
         console.log(`Elysia server is operating by port ${currentPort}`)
     });
-app.use(router);
 
 // const tcpServer = Bun.listen({
 //     hostname: "0.0.0.0",
