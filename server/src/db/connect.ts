@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
+import { Database } from "bun:sqlite";
 
-const url = Bun.env.DB_KEY as string;
-export const sql = neon(url);
+const DB = new Database("./data/HuaDB0.sqlite", {create: true});
 
+export default DB;

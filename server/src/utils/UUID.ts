@@ -27,6 +27,7 @@ export function UUIDV5(GenType: UUIDFormat = "hex", SegmentLength: SegmentLimit 
 // console.log(UUIDHex("hex", 1));
 // console.log(UUIDHex("hex", 2));
 // console.log(UUIDHex("hex", 3));
-// console.log(UUIDHex("hex", 4));
+console.log(UUIDHex("hex", 0));
+
 
 console.log(UUIDV5("hex"));;

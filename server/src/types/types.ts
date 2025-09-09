@@ -9,6 +9,13 @@ export interface userSchema {
     user_email: string,
     user_password: string,
     user_avatar: string,
+    created_at: Date,
+};
+
+export interface chatSchema{
+    chat_id: string,
+    chat_name: string,
+    created_at: Date,
 }
 
 export interface KeyExchangeMessage {
