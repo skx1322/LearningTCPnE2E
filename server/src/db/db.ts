@@ -1,13 +1,13 @@
 import { status } from "elysia";
-import { UUIDHex } from "../utils/UUID";
 import DB from "./connect";
 import { DB_MODEL } from "./model";
 import { chatSchema, userSchema } from "../types/types";
+import { UUIDUtil } from "../utils/UUID";
 
 export class DB_CHAT {
     createUser(username: string) {
-        const user_id = UUIDHex("hex", 3);
-        const public_key = UUIDHex("hex", 0);
+        const user_id = UUIDUtil.UUIDHex("hex", 3);
+        const public_key = UUIDUtil.UUIDHex("hex", 0);
 
         try {
             const insert = DB.prepare(DB_MODEL.insertUser())
@@ -47,7 +47,7 @@ export class DB_CHAT {
     };
 
     createChat(chat_name: string) {
-        const chat_id = UUIDHex("hex", 0);
+        const chat_id = UUIDUtil.UUIDHex("hex", 0);
         try {
             const create = DB.prepare(DB_MODEL.createChat());
             create.run(chat_id, chat_name);
@@ -85,6 +85,11 @@ export class DB_CHAT {
             console.error(error);
         }
     };
+
+    sendMessage(content: string, user: Omit<userSchema, "user_password" | "user_avatar">, chat: chatSchema){
+        const message_id = UUIDUtil.UUIDHex("hex", 3);
+        
+    };  
 }
 
 // console.log(new DB_CHAT().createUser("Fu Hua"))
