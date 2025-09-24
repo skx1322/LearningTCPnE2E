@@ -4,7 +4,7 @@ import DB from "./connect";
 import { DB_MODEL } from "./model";
 import { chatSchema, userSchema } from "../types/types";
 
-export class DB_CHAT {
+class DB_CHAT {
     createUser(username: string) {
         const user_id = UUIDHex("hex", 3);
         const public_key = UUIDHex("hex", 0);
@@ -87,9 +87,4 @@ export class DB_CHAT {
     };
 }
 
-// console.log(new DB_CHAT().createUser("Fu Hua"))
-// console.log(new DB_CHAT().getUser("Fu Hua"))
-// console.log(new DB_CHAT().deleteUser("a7ad92fd4e5e71fe"))
-
-// console.log(new DB_CHAT().createChat("St Freya Group Chat."))
-// console.log(new DB_CHAT().findChat())
+export default DB_CHAT;

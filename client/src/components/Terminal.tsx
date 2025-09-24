@@ -1,63 +1,161 @@
 import { useState, useRef, useEffect } from "react";
 import type { Line } from "../types/types";
 
-interface ServerMessage {
-  command: string;
-  message?: string;
-  data?: any;
-}
-
 const Terminal = () => {
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState<string>("");
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const ws = useRef<WebSocket | null>(null);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const connectWebSocket = () => {
+    if (ws) return;
     const socket = new WebSocket(`ws://localhost:3000/ws`);
-    ws.current = socket;
-    
+
     socket.onopen = () => {
       console.log("WebSocket connection established");
       setIsConnected(true);
-      setLines((prev) => [...prev, { text: "✅ Connected to server.", isInput: false }]);
+      setLines((prev) => [
+        ...prev,
+        { text: "Connected to server.", isInput: false },
+      ]);
+
+      if (username) {
+        socket.send(
+          JSON.stringify({ command: "SET-USERNAME", payload: username })
+        );
+      }
     };
 
-    socket.onmessage = (event) => {
-      const response: ServerMessage = JSON.parse(event.data);
-      let output = `[SERVER]: ${response.command}`;
-      setLines((prev) => [...prev, { text: output, isInput: false }]);
+    socket.onmessage = (event: { data: string }) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.user && data.message) {
+          const output = `[${data.user}]: ${data.message}`;
+          setLines((prev) => [...prev, { text: output, isInput: false }]);
+        } else {
+          setLines((prev) => [...prev, { text: event.data, isInput: false }]);
+        }
+      } catch (error) {
+        setLines((prev) => [
+          ...prev,
+          { text: `[SERVER]: ${event.data}`, isInput: false },
+        ]);
+      }
     };
 
     socket.onclose = () => {
       console.log("WebSocket connection closed");
       setIsConnected(false);
-      setLines((prev) => [...prev, { text: "❌ Disconnected from server.", isInput: false }]);
+      setUsername(null);
+      setLines((prev) => [
+        ...prev,
+        { text: "Disconnected from server.", isInput: false },
+      ]);
+      setWs(null);
     };
 
-    return () => {
-      socket.close();
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      setLines((prev) => [
+        ...prev,
+        { text: "WebSocket connection error.", isInput: false },
+      ]);
+      setUsername(null);
     };
-  }, []);
+
+    setWs(socket);
+  };
+
+  useEffect(() => {
+    setLines(() => [{ text: "Type 'HELP' to see command.", isInput: false }]);
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [ws]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const command = input.trim();
-      if (command) {
-        setLines((prevLines) => [...prevLines, { text: `> ${command}`, isInput: true }]);
-        
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({ command: "TERMINAL_INPUT", payload: command }));
-        } else {
-          setLines((prev) => [...prev, { text: "Not connected to server.", isInput: false }]);
-        }
+      const lowerCaseCommand = command.toLocaleLowerCase();
 
+      if (command) {
+        setLines((prevLines) => [
+          ...prevLines,
+          { text: `> ${command}`, isInput: true },
+        ]);
+
+        if (lowerCaseCommand === "help") {
+          setLines((prev) => [
+            ...prev,
+            {
+              text: "JOIN-CHAT AS <your_username> to join chat.",
+              isInput: false,
+            },
+            {
+              text: "LEAVE-CHAT to leave chat.",
+              isInput: false,
+            },
+          ]);
+        } else if (
+          lowerCaseCommand.startsWith("join-chat as ") &&
+          !isConnected
+        ) {
+          const name = command.substring("join-chat as ".length).trim();
+          if (name) {
+            setUsername(name);
+            setLines((prev) => [
+              ...prev,
+              { text: `Joining chat as ${name}...`, isInput: false },
+            ]);
+            connectWebSocket();
+          } else {
+            setLines((prev) => [
+              ...prev,
+              {
+                text: "Invalid username. Please provide a name after 'JOIN-CHAT AS'.",
+                isInput: false,
+              },
+            ]);
+          }
+        } else if (lowerCaseCommand === "leave-chat" && isConnected) {
+          if (ws) {
+            setUsername(null);
+            ws.close();
+          }
+        } else if (isConnected && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              command: "MESSAGE",
+              payload: command,
+              username: username,
+            })
+          );
+        } else if (!isConnected && lowerCaseCommand !== "help") {
+          setLines((prev) => [
+            ...prev,
+            {
+              text: "Not connected to server. Type 'JOIN-CHAT AS <your_username>' to connect.",
+              isInput: false,
+            },
+          ]);
+        }
         setInput("");
       }
     }
   };
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [lines]);
 
   return (
     <div className="bg-gray-950 text-blue-400 p-4 font-mono w-full h-full flex flex-col rounded-lg border border-blue-900">
@@ -65,15 +163,19 @@ const Terminal = () => {
         {lines.map((line, index) => (
           <div
             key={index}
-            className={line.isInput ? "text-green-400" : "text-blue-400"}
+            className={line.isInput ? "text-green-400" : "text-sky-300"}
           >
             {line.text}
           </div>
         ))}
       </div>
       <div className="flex items-center border-t border-blue-800 pt-2">
-        <span className={`mr-2 text-left whitespace-nowrap ${isConnected ? 'text-green-400' : 'text-red-500'}`}>
-          {`PS C:\\Users\\NERDANTA>`}
+        <span
+          className={`mr-2 text-left whitespace-nowrap ${
+            isConnected ? "text-green-400" : "text-amber-300"
+          }`}
+        >
+          {username ? `PS C:\\Users>${username}` : `PS C:\\Users>`}
         </span>
         <textarea
           value={input}
