@@ -5,7 +5,7 @@ import { clientPassword } from "./service/passEnc";
 // import { websocket } from "@elysiajs/websocket";
 
 
-const currentPort = <string>process.env.CUSTOM_PORT ?? 3000;
+const currentPort = <string>Bun.env.PORT ?? 3000;
 
 const app = new Elysia()
     .get("/", () => "Hello Elysia")
