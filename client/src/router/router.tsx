@@ -4,6 +4,7 @@ import Main from "../components/main";
 // import Register from "../pages/register";
 // import About from "../pages/about";
 import Chat from "../pages/chat";
+import Video from "../pages/video";
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Chat />
+      },
+            {
+        path: "/share",
+        element: <Video />
       },
     ],
   },

@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 
-const rooms = new Map<string, Set<any>>();
 const clients = new Set<any>();
 
 export const chatSocket = new Elysia().ws('/ws', {

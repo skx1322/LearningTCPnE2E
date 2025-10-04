@@ -5,75 +5,17 @@ const peerConnectionConfig = {
 };
 
 const ScreenShare = () => {
-  const [room, setRoom] = useState("my-screen-share-room");
   const [isSharing, setIsSharing] = useState(false);
   const ws = useRef<WebSocket | null>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
-
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
-  const handleStartSharing = async () => {
-    setIsSharing(true);
-
-    try {
-      const localStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = localStream;
-      }
-
-      if (peerConnection.current) {
-        peerConnection.current.close();
-      }
-
-      peerConnection.current = createPeerConnection();
-
-      localStream.getTracks().forEach((track) => {
-        peerConnection.current!.addTrack(track, localStream);
-      });
-
-      const offer = await peerConnection.current.createOffer();
-      await peerConnection.current.setLocalDescription(offer);
-      sendMessage({ type: "offer", data: offer });
-    } catch (error) {
-      console.error("Error starting screen share:", error);
-      setIsSharing(false);
+  const sendMessage = (message: any) => {
+    if (ws.current) {
+      ws.current.send(JSON.stringify(message));
     }
   };
-
-    const handleStopSharing = () => {
-    if (peerConnection.current) {
-      peerConnection.current.close();
-      peerConnection.current = null;
-    }
-
-    if (localVideoRef.current && localVideoRef.current.srcObject) {
-      const stream = localVideoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      localVideoRef.current.srcObject = null;
-    }
-
-    setIsSharing(false);
-  };
-
-  useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:3000/signaling");
-
-    ws.current.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      console.log(message);
-
-      handleSignalingMessage(message);
-    };
-
-    return () => {
-      ws.current?.close();
-    };
-  }, []);
 
   const createPeerConnection = () => {
     const pc = new RTCPeerConnection(peerConnectionConfig);
@@ -84,10 +26,15 @@ const ScreenShare = () => {
       }
     };
 
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE connection state changed: ${pc.iceConnectionState}`);
+    };
+
     pc.ontrack = (event) => {
       if (remoteVideoRef.current) {
-        console.log(remoteVideoRef.current.srcObject);
         remoteVideoRef.current.srcObject = event.streams[0];
+        console.log("Remote track received and attached to video element.");
+        remoteVideoRef.current.play();
       }
     };
 
@@ -96,62 +43,114 @@ const ScreenShare = () => {
 
   const handleSignalingMessage = async (message: any) => {
     if (!peerConnection.current) {
-      peerConnection.current = createPeerConnection();
+      if (message.type === "offer" || message.type === "candidate") {
+        peerConnection.current = createPeerConnection();
+      } else {
+        console.warn(
+          `PeerConnection not initialized. Ignoring ${message.type}.`
+        );
+        return;
+      }
     }
-
     switch (message.type) {
       case "offer":
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription(message.data)
         );
         const answer = await peerConnection.current.createAnswer();
-
-        console.log(answer);
         await peerConnection.current.setLocalDescription(answer);
         sendMessage({ type: "answer", data: answer });
         break;
 
       case "answer":
-        await peerConnection.current.setRemoteDescription(
-          new RTCSessionDescription(message.data)
-        );
+        console.log(peerConnection.current.signalingState);
+        if (peerConnection.current.signalingState === "have-local-offer") {
+          console.log("Setting remote answer. State is 'have-local-offer'.");
+          await peerConnection.current.setRemoteDescription(
+            new RTCSessionDescription(message.data)
+          );
+        } else {
+          console.warn(
+            `Ignoring 'answer' received. Current state: ${peerConnection.current.signalingState}. Expected 'have-local-offer'.`
+          );
+        }
         break;
 
       case "candidate":
-        await peerConnection.current.addIceCandidate(
-          new RTCIceCandidate(message.data)
-        );
+        if (message.data) {
+          try {
+            if (peerConnection.current.remoteDescription) {
+              await peerConnection.current.addIceCandidate(
+                new RTCIceCandidate(message.data)
+              );
+            } else {
+              console.log(
+                "Candidate received before remote description is set. Waiting..."
+              );
+            }
+          } catch (e) {
+            console.error("Error adding ICE candidate:", e);
+          }
+        }
         break;
     }
   };
 
-  const sendMessage = (message: any) => {
-    if (ws.current) {
-      ws.current.send(JSON.stringify({ ...message, room }));
+  const handleStartSharing = async () => {
+    setIsSharing(true);
+    try {
+      const localStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStream;
+      }
+      peerConnection.current = createPeerConnection();
+      localStream.getTracks().forEach((track) => {
+        peerConnection.current!.addTrack(track, localStream);
+      });
+      const offer = await peerConnection.current.createOffer();
+      await peerConnection.current.setLocalDescription(offer);
+      sendMessage({ type: "offer", data: offer });
+    } catch (error) {
+      console.error("Error starting screen share:", error);
+      setIsSharing(false);
     }
   };
 
-  const handleJoinRoom = () => {
-    sendMessage({ type: "join" });
-    console.log(`Joined room: ${room}`);
+  const handleStopSharing = () => {
+    peerConnection.current?.close();
+    peerConnection.current = null;
+    if (localVideoRef.current?.srcObject) {
+      const stream = localVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      localVideoRef.current.srcObject = null;
+    }
+    setIsSharing(false);
   };
+
+  useEffect(() => {
+    ws.current = new WebSocket("ws://localhost:3000/video");
+
+    ws.current.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log(message);
+      handleSignalingMessage(message);
+    };
+
+    ws.current.onopen = () => console.log("WebSocket connected!");
+    ws.current.onclose = () => console.log("WebSocket disconnected.");
+
+    return () => {
+      ws.current?.close();
+    };
+  }, []);
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>WebRTC Screen Sharing</h1>
+      <h1>WebRTC Screen Sharing (No Rooms)</h1>
       <div style={{ marginBottom: "10px" }}>
-        <input
-          type="text"
-          value={room}
-          onChange={(e) => setRoom(e.target.value)}
-          placeholder="Enter room name"
-          disabled={isSharing} // ✨ Disable input while sharing
-        />
-        <button onClick={handleJoinRoom} disabled={isSharing}>
-          Join Room
-        </button>
-
-        {/* ✨ 3. Use the state to control the buttons */}
         {!isSharing ? (
           <button onClick={handleStartSharing}>Start Sharing</button>
         ) : (
@@ -165,7 +164,7 @@ const ScreenShare = () => {
       </div>
       <div style={{ display: "flex", gap: "20px" }}>
         <div>
-          <h2>My Screen</h2>
+          <h2>My Screen (Presenter View)</h2>
           <video
             ref={localVideoRef}
             autoPlay
@@ -175,7 +174,7 @@ const ScreenShare = () => {
           />
         </div>
         <div>
-          <h2>Remote Screen</h2>
+          <h2>Remote Screen (Viewer View)</h2>
           <video
             ref={remoteVideoRef}
             autoPlay
