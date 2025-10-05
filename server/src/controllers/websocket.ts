@@ -23,8 +23,6 @@ export const chatSocket = new Elysia().ws('/ws', {
 
     message(ws, message) {
         const { command, payload, username } = message;
-        console.log(`${username ?? ws.id}: ${payload}`);
-
         clients.forEach(client => {
             if (client !== ws) {
                 client.send(JSON.stringify({

@@ -15,7 +15,6 @@ export const videoSocket = new Elysia().ws('/video', {
 
     message(ws, message) {
         console.log(`[*] Received message of type "${message.type}" from ${ws.id}`);
-        console.log(message);
         clients.forEach(client => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(message));

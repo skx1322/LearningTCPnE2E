@@ -1,7 +1,15 @@
 import { useRef, useEffect, useState } from "react";
+import { summaryAPI } from "../api/summaryAPI";
 
 const peerConnectionConfig = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelay@metered.ca",
+      credential: "8888",
+    },
+  ],
 };
 
 const ScreenShare = () => {
@@ -131,7 +139,7 @@ const ScreenShare = () => {
   };
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:3000/video");
+    ws.current = new WebSocket(summaryAPI.videoSocket.url);
 
     ws.current.onmessage = (event) => {
       const message = JSON.parse(event.data);

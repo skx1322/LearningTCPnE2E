@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { Line } from "../types/types";
+import { summaryAPI } from "../api/summaryAPI";
 
 const Terminal = () => {
   const [lines, setLines] = useState<Line[]>([]);
@@ -12,7 +13,7 @@ const Terminal = () => {
 
   const connectWebSocket = () => {
     if (ws) return;
-    const socket = new WebSocket(`ws://localhost:3000/ws`);
+    const socket = new WebSocket(summaryAPI.chatSocket.url);
 
     socket.onopen = () => {
       console.log("WebSocket connection established");
@@ -163,7 +164,7 @@ const Terminal = () => {
         {lines.map((line, index) => (
           <div
             key={index}
-            className={line.isInput ? "text-green-400" : "text-sky-300"}
+            className={`whitespace-pre-wrap break-words ${line.isInput ? "text-green-400" : "text-sky-300"}`}
           >
             {line.text}
           </div>
